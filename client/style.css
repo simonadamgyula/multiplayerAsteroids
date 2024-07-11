@@ -1,12 +1,24 @@
 body {
     height: 100vh;
     margin: 0;
-    background-color: aliceblue;
+    background-color: black;
     overflow: hidden;
     cursor: none;
+    position: relative;
 }
 
-.cursor {
-    width: 30px;
+.ship {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 40px;
+    transition: all ease;
+}
+
+.meteorite {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 40px;
     transition: all ease;
 }

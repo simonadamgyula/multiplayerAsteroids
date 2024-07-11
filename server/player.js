@@ -7,7 +7,9 @@ export class Player {
     constructor(id, color) {
         this.id = id;
         this.color = color;
-        this.position = { x: 0, y: 0 };
+        this.position = new Object();
+        this.position.x = 0;
+        this.position.y = 0;
         this.rotation = 0;
     }
 

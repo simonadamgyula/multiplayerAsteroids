@@ -5,11 +5,23 @@ var keys = [];
     const ws = await connectToServer();
 
     ws.onmessage = (webSocketMessage) => {
+
         const messageBody = JSON.parse(webSocketMessage.data);
-        console.log(messageBody);
-        const cursor = getOrCreateShip(messageBody);
-        cursor.style.transform = `translate(${messageBody.position.x}px, ${messageBody.position.y}px) rotate(${messageBody.rotation}deg)`;
-    };
+
+        switch (messageBody.action) {
+            case 'move':
+                const cursor = getOrCreateShip(messageBody);
+                cursor.style.transform = `translate(${messageBody.position.x}px, ${messageBody.position.y}px) rotate(${messageBody.rotation}deg)`;
+                break;
+            case 'disconnect':
+                const ship = document.querySelector(`[data-sender='${messageBody.sender}']`);
+                ship.remove();
+                break;
+            case "game_update":
+                moveMeteorites(messageBody.meteorites);
+                break;
+        };
+    }
 
     document.body.onkeydown = (event) => {
         if (!keys.includes(event.key)) {
@@ -56,6 +68,28 @@ var keys = [];
         });
     }
 
+    function moveMeteorites(meteorites) {
+        for (const meteorite of meteorites) {
+            const meteoriteElement = getOrCreateMeteorite(meteorite);
+            meteoriteElement.style.transform = `translate(${meteorite.position.x}px, ${meteorite.position.y}px) rotate(${meteorite.rotation}deg)`;
+        }
+    }
+
+    function getOrCreateMeteorite(meteorite) {
+        const existing = document.querySelector(`[data-meteorite='${meteorite.id}']`);
+        if (existing) {
+            return existing;
+        }
+
+        const template = document.getElementById('meteorite-template');
+        const result = template.content.firstElementChild.cloneNode(true);
+
+        result.setAttribute("data-meteorite", meteorite.id);
+        document.body.appendChild(result);
+
+        return result;
+    }
+
     function getOrCreateShip(messageBody) {
         const sender = messageBody.sender;
         const existing = document.querySelector(`[data-sender='${sender}']`);
@@ -65,7 +99,7 @@ var keys = [];
 
         const template = document.getElementById('ship-template');
         const ship = template.content.firstElementChild.cloneNode(true);
-        const svgPath = ship.getElementsByTagName('polygon')[0];
+        const svgPath = ship.getElementsByTagName('path')[0];
 
         ship.setAttribute("data-sender", sender);
         svgPath.setAttribute('stroke', `hsl(${messageBody.color}, 50%, 50%)`);

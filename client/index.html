@@ -1,18 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>    
+    <title>Document</title>
     <link rel="stylesheet" href="style.css">
     <script src="index.js" type="module"></script>
 </head>
+
 <body id="box">
     <template id="ship-template">
-        <svg height="100" width="228" xmlns="http://www.w3.org/2000/svg">
-            <polygon points="100,10 150,190 50,190" style="fill:transparent;stroke:purple;stroke-width:3" />
-          </svg>
+        <svg viewBox="296.3 308.9 30 80" xmlns="http://www.w3.org/2000/svg" xmlns:bx="https://boxy-svg.com" class="ship">
+            <path d="M 311.31 309.406 L 325.777 388.555 L 296.843 388.555 L 311.31 309.406 Z" style="fill: transparent" bx:shape="triangle 296.843 309.406 28.934 79.149 0.5 0 1@9cffc4e0" />
+        </svg>
+    </template>
+    <template id="meteorite-template">
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="meteorite">
+            <polygon style="fill: transparent; stroke: white;" points="46.484 2.68 12.612 8.962 12.886 29.995 7.149 51.574 14.798 84.08 25.178 81.075 33.645 93.094 64.512 97.191 85.818 85.172 85.818 73.7 94.012 68.783 95.925 53.486 73.526 39.009 89.915 29.176 90.461 21.254 82.267 12.513 60.961 7.596 45.937 22.074" />
+        </svg>
+    </template>
+    <template>
+        <svg viewBox="0 0 2 20" xmlns="http://www.w3.org/2000/svg">
+            <rect x="0.42" y="0.337" width="1.118" height="19.286" transform="matrix(1, 0, 0, 1, 0, 8.881784197001252e-16)" />
+        </svg>
     </template>
 </body>
+
 </html>
