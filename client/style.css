@@ -3,8 +3,11 @@ body {
     margin: 0;
     background-color: white;
     overflow: hidden;
-    cursor: none;
     position: relative;
+
+    &.playing {
+        cursor: none;
+    }
 }
 
 #play-area {

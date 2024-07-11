@@ -1,3 +1,5 @@
+const resolution = [1600, 950]
+
 /**
  * Player class
  * @param {string} id - player id
@@ -8,8 +10,8 @@ export class Player {
         this.id = id;
         this.color = color;
         this.position = new Object();
-        this.position.x = 0;
-        this.position.y = 0;
+        this.position.x = resolution[0] / 2 + Math.floor(Math.random() * 100) - 50;
+        this.position.y = resolution[1] / 2 + Math.floor(Math.random() * 100) - 50;;
         this.rotation = 0;
 
         this.can_shoot = true;
@@ -20,6 +22,10 @@ export class Player {
      * @param {string[]} direction 
      */
     update(direction) {
+        if (this.position.x < -50 || this.position.x > resolution[0] + 50 || this.position.y < -50 || this.position.y > resolution[1] + 50) {
+            return true;
+        }
+
         if (direction.includes('forward')) {
             this.move(5);
         }
@@ -32,6 +38,8 @@ export class Player {
         if (direction.includes('right')) {
             this.rotation += 2;
         }
+
+        return false;
     }
 
     move(distance) {

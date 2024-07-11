@@ -1,8 +1,15 @@
 var keys = [];
+var loop = null;
 
 (async function () {
 
     const ws = await connectToServer();
+
+    ws.onclose = () => {
+        document.querySelector("body").innerHTML = `<h1>You died!</h1>\n<button onclick="location.reload()">Rejoin</button>`;
+        document.body.classList.remove('playing');
+        clearInterval(loop);
+    }
 
     ws.onmessage = (webSocketMessage) => {
 
@@ -50,7 +57,7 @@ var keys = [];
     }
 
     function setup() {
-        setInterval(() => {
+        loop = setInterval(() => {
             var directions = [];
 
             if (keys.includes('ArrowDown') || keys.includes('s')) {

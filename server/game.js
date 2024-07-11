@@ -2,8 +2,8 @@ const resolution = [1600, 950]
 
 export class Game {
     constructor(clients) {
-        this.meteorites = [];
-        this.bullets = [];
+        this.meteorites = new Set();
+        this.bullets = new Set();
 
         this.meteorites_ids = 0;
         this.bullet_ids = 0;
@@ -19,65 +19,70 @@ export class Game {
 
         this.meteorites.forEach((meteorite) => {
             if (meteorite.update()) {
-                const index = this.meteorites.indexOf(meteorite);
-                if (index > -1) {
-                    this.meteorites.splice(index, 1);
-                }
+                this.meteorites.delete(meteorite);
 
                 this.sendBroadcast({ action: 'meteorite_destroyed', id: meteorite.id });
             }
         });
         this.bullets.forEach((bullet) => {
             if (bullet.update()) {
-                const index = this.bullets.indexOf(bullet);
-                if (index > -1) {
-                    this.bullets.splice(index, 1);
-                }
+                this.bullets.delete(bullet);
 
                 this.sendBroadcast({ action: 'bullet_destroyed', id: bullet.id });
             }
         });
 
         if (this.cicles % 25 === 0) {
-            this.meteorites.push(new Meteorite(this.meteorites_ids++, Math.floor(Math.random() * 360)));
+            const x = Math.floor(Math.random() * resolution[0]);
+            const y = Math.floor(Math.random() * resolution[1]);
+
+            const facing = Math.atan2(resolution[1] / 2 - y, resolution[0] / 2 - x) * 180 / Math.PI;
+
+            this.meteorites.add(new Meteorite(this.meteorites_ids++, facing));
         }
         this.checkCollision();
 
-        this.sendBroadcast({ action: 'game_update', meteorites: this.meteorites, bullets: this.bullets });
+        this.sendBroadcast({ action: 'game_update', meteorites: Array.from(this.meteorites), bullets: Array.from(this.bullets) });
     }
 
     checkCollision() {
         this.meteorites.forEach((meteorite) => {
             this.bullets.forEach((bullet) => {
-                if (Math.abs(meteorite.position.x + meteorite.size / 2 - bullet.position.x) < meteorite.size / 2 && Math.abs(meteorite.position.y + meteorite.size / 2 - bullet.position.y) < meteorite.size / 2) {
+                if (Math.abs(meteorite.position.x + (meteorite.size / 2) - bullet.position.x) < meteorite.size / 2 && Math.abs(meteorite.position.y + (meteorite.size / 2) - bullet.position.y) < meteorite.size / 2) {
                     this.duplicateMeteorites(meteorite);
 
-                    const index = this.bullets.indexOf(bullet);
-                    if (index > -1) {
-                        this.bullets.splice(index, 1);
-                        this.sendBroadcast({ action: 'bullet_destroyed', id: bullet.id });
-                    }
+                    this.bullets.delete(bullet);
+                    this.sendBroadcast({ action: 'bullet_destroyed', id: bullet.id });
                 }
             });
+
+            for (const client of this.clients.keys()) {
+                const player = this.clients.get(client);
+                if (Math.abs(meteorite.position.x + (meteorite.size / 2) - (player.position.x + 20)) < (meteorite.size / 2) && Math.abs(meteorite.position.y + (meteorite.size / 2) - (player.position.y + 50)) < (meteorite.size / 2)) {
+                    this.duplicateMeteorites(meteorite);
+
+                    client.send(JSON.stringify({ action: 'score', sender: player.id }));
+                    client.close();
+                    this.clients.delete(client);
+                    this.sendBroadcast({ sender: player.id, action: 'disconnect' });
+                }
+            }
         });
     }
 
     duplicateMeteorites(meteorite) {
-        const index = this.meteorites.indexOf(meteorite);
-        if (index > -1) {
-            this.meteorites.splice(index, 1);
-            this.sendBroadcast({ action: 'meteorite_destroyed', id: meteorite.id });
+        if (meteorite.size > 80) {
+            this.meteorites.add(new Meteorite(this.meteorites_ids++, meteorite.facing + 50, { ...meteorite.position }, meteorite.size / 2));
+            this.meteorites.add(new Meteorite(this.meteorites_ids++, meteorite.facing - 50, { ...meteorite.position }, meteorite.size / 2));
         }
 
-        if (meteorite.size < 50) return;
+        this.meteorites.delete(meteorite);
+        this.sendBroadcast({ action: 'meteorite_destroyed', id: meteorite.id });
 
-        this.meteorites.push(new Meteorite(this.meteorites_ids++, meteorite.facing + 60));
-        this.meteorites.push(new Meteorite(this.meteorites_ids++, meteorite.facing - 60));
     }
 
     shoot(bullet_position) {
-        this.bullets.push(new Bullet(this.bullet_ids++, bullet_position.position, bullet_position.rotation));
-        console.log(this.bullets)
+        this.bullets.add(new Bullet(this.bullet_ids++, bullet_position.position, bullet_position.rotation));
     }
 
     start() {
@@ -99,16 +104,16 @@ export class Game {
 }
 
 class Meteorite {
-    constructor(id, facing) {
+    constructor(id, facing, position, size) {
         this.id = id;
-        this.size = Math.floor(Math.random() * 100) + 100;
-        this.position = Meteorite.getSpawnPostition(this.size);
+        this.size = size || Math.floor(Math.random() * 100) + 100;
+        this.position = position || Meteorite.getSpawnPostition(this.size);
         this.facing = facing;
         this.rotation = 0;
     }
 
     update() {
-        if (this.position.x < -this.size || this.position.x > resolution[0] + this.size || this.position.y < -this.size || this.position.y > resolution[1] + this.size) {
+        if (this.position.x < -this.size * 2 || this.position.x > resolution[0] + this.size * 2 || this.position.y < -this.size * 2 || this.position.y > resolution[1] + this.size * 2) {
             delete this;
             return true;
         }
@@ -122,8 +127,8 @@ class Meteorite {
     }
 
     static getSpawnPostition(size) {
-        const bounding_width = resolution[0] + size
-        const bounding_height = resolution[1] + size
+        const bounding_width = resolution[0] + size * 2
+        const bounding_height = resolution[1] + size * 2
 
         var position = { x: 0, y: 0 }
 
@@ -150,18 +155,19 @@ class Meteorite {
             }
         }
 
-        position.x -= size / 2
-        position.y -= size / 2
+        position.x -= size
+        position.y -= size
 
         return position
     }
 }
 
 class Bullet {
-    constructor(id, position, rotation) {
+    constructor(id, position, rotation, owner) {
         this.id = id;
         this.position = position;
         this.rotation = rotation;
+        this.owner = owner;
     }
 
     update() {

@@ -65,13 +65,14 @@ wss.on('connection', (ws) => {
   });
 
   ws.on('close', () => {
+    const player_id = clients.get(ws).id;
     clients.delete(ws);
     console.log(clients.size)
     if (clients.size === 0) {
       game.dispose();
       game = null;
     }
-    broadcast({ sender: id, action: 'disconnect' });
+    broadcast({ sender: player_id, action: 'disconnect' });
   });
 });
 
