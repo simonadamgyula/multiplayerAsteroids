@@ -41,7 +41,7 @@ wss.on('connection', (ws) => {
 
     switch (request.action) {
       case 'move':
-        const ship = clients.get(ws);
+        var ship = clients.get(ws);
         ship.update(request.directions);
 
         message.sender = ship.id;
@@ -51,6 +51,13 @@ wss.on('connection', (ws) => {
         message.rotation = ship.rotation;
 
         broadcast(message);
+        break;
+      case 'shoot':
+        var ship = clients.get(ws);
+        console.log('shoot');
+        const bullet_position = ship.shoot();
+        if (!bullet_position) return;
+        game.shoot(bullet_position);
         break;
     }
 

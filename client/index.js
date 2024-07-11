@@ -10,15 +10,26 @@ var keys = [];
 
         switch (messageBody.action) {
             case 'move':
-                const cursor = getOrCreateShip(messageBody);
-                cursor.style.transform = `translate(${messageBody.position.x}px, ${messageBody.position.y}px) rotate(${messageBody.rotation}deg)`;
+                var ship = getOrCreateShip(messageBody);
+                ship.style.transform = `translate(${messageBody.position.x}px, ${messageBody.position.y}px) rotate(${messageBody.rotation}deg)`;
                 break;
             case 'disconnect':
-                const ship = document.querySelector(`[data-sender='${messageBody.sender}']`);
+                var ship = document.querySelector(`[data-sender='${messageBody.sender}']`);
                 ship.remove();
                 break;
             case "game_update":
                 moveMeteorites(messageBody.meteorites);
+                moveBullets(messageBody.bullets);
+                break;
+            case 'meteorite_destroyed':
+                const meteorite = document.querySelector(`[data-meteorite='${messageBody.id}']`);
+                if (!meteorite) return;
+                meteorite.remove();
+                break;
+            case 'bullet_destroyed':
+                const bullet = document.querySelector(`[data-bullet='${messageBody.id}']`);
+                if (!bullet) return;
+                bullet.remove();
                 break;
         };
     }
@@ -26,6 +37,11 @@ var keys = [];
     document.body.onkeydown = (event) => {
         if (!keys.includes(event.key)) {
             keys.push(event.key);
+        }
+
+        if (event.key === ' ') {
+            console.log('shoot');
+            ws.send(JSON.stringify({ action: 'shoot' }));
         }
     }
 
@@ -72,7 +88,31 @@ var keys = [];
         for (const meteorite of meteorites) {
             const meteoriteElement = getOrCreateMeteorite(meteorite);
             meteoriteElement.style.transform = `translate(${meteorite.position.x}px, ${meteorite.position.y}px) rotate(${meteorite.rotation}deg)`;
+            meteoriteElement.style.width = `${meteorite.size}px`;
+            meteoriteElement.style.height = `${meteorite.size}px`;
         }
+    }
+
+    function moveBullets(bullets) {
+        for (const bullet of bullets) {
+            const bulletElement = getOrCreateBullet(bullet);
+            bulletElement.style.transform = `translate(${bullet.position.x}px, ${bullet.position.y}px) rotate(${bullet.rotation}deg)`;
+        }
+    }
+
+    function getOrCreateBullet(bullet) {
+        const existing = document.querySelector(`[data-bullet='${bullet.id}']`);
+        if (existing) {
+            return existing;
+        }
+
+        const template = document.getElementById('bullet-template');
+        const result = template.content.firstElementChild.cloneNode(true);
+
+        result.setAttribute("data-bullet", bullet.id);
+        document.body.appendChild(result);
+
+        return result;
     }
 
     function getOrCreateMeteorite(meteorite) {

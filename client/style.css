@@ -1,10 +1,16 @@
 body {
     height: 100vh;
     margin: 0;
-    background-color: black;
+    background-color: white;
     overflow: hidden;
     cursor: none;
     position: relative;
+}
+
+#play-area {
+    background-color: black;
+    width: 1600px;
+    height: 950px;
 }
 
 .ship {
@@ -20,5 +26,13 @@ body {
     top: 0;
     left: 0;
     width: 40px;
+    transition: all ease;
+}
+
+.bullet {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 2px;
     transition: all ease;
 }
