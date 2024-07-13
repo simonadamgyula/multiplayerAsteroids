@@ -42,7 +42,10 @@ wss.on('connection', (ws) => {
     switch (request.action) {
       case 'move':
         var ship = clients.get(ws);
-        ship.update(request.directions);
+        if (ship.update(request.directions)) {
+          ws.close();
+          return;
+        }
 
         message.sender = ship.id;
         message.action = 'move';
@@ -57,7 +60,7 @@ wss.on('connection', (ws) => {
         console.log('shoot');
         const bullet_position = ship.shoot();
         if (!bullet_position) return;
-        game.shoot(bullet_position);
+        game.shoot(bullet_position, ship);
         break;
     }
 
@@ -65,14 +68,14 @@ wss.on('connection', (ws) => {
   });
 
   ws.on('close', () => {
-    const player_id = clients.get(ws).id;
+    const player = clients.get(ws);
     clients.delete(ws);
     console.log(clients.size)
     if (clients.size === 0) {
       game.dispose();
       game = null;
     }
-    broadcast({ sender: player_id, action: 'disconnect' });
+    broadcast({ sender: player.id, action: 'disconnect' });
   });
 });
 

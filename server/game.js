@@ -12,6 +12,7 @@ export class Game {
         this.clients = clients;
 
         this.loop = null;
+        this.difficulty = 1;
     }
 
     update() {
@@ -32,7 +33,11 @@ export class Game {
             }
         });
 
-        if (this.cicles % 25 === 0) {
+        if (this.cicles % 200 === 0) {
+            this.difficulty += 0.1;
+        }
+
+        if (this.cicles % parseInt(25 / this.difficulty) === 0) {
             const x = Math.floor(Math.random() * resolution[0]);
             const y = Math.floor(Math.random() * resolution[1]);
 
@@ -49,6 +54,8 @@ export class Game {
         this.meteorites.forEach((meteorite) => {
             this.bullets.forEach((bullet) => {
                 if (Math.abs(meteorite.position.x + (meteorite.size / 2) - bullet.position.x) < meteorite.size / 2 && Math.abs(meteorite.position.y + (meteorite.size / 2) - bullet.position.y) < meteorite.size / 2) {
+                    bullet.owner.score += 10
+
                     this.duplicateMeteorites(meteorite);
 
                     this.bullets.delete(bullet);
@@ -61,10 +68,8 @@ export class Game {
                 if (Math.abs(meteorite.position.x + (meteorite.size / 2) - (player.position.x + 20)) < (meteorite.size / 2) && Math.abs(meteorite.position.y + (meteorite.size / 2) - (player.position.y + 50)) < (meteorite.size / 2)) {
                     this.duplicateMeteorites(meteorite);
 
-                    client.send(JSON.stringify({ action: 'score', sender: player.id }));
+                    client.send(JSON.stringify({ action: 'score', score: player.score }));
                     client.close();
-                    this.clients.delete(client);
-                    this.sendBroadcast({ sender: player.id, action: 'disconnect' });
                 }
             }
         });
@@ -81,8 +86,8 @@ export class Game {
 
     }
 
-    shoot(bullet_position) {
-        this.bullets.add(new Bullet(this.bullet_ids++, bullet_position.position, bullet_position.rotation));
+    shoot(bullet_position, owner) {
+        this.bullets.add(new Bullet(this.bullet_ids++, bullet_position.position, bullet_position.rotation, owner));
     }
 
     start() {

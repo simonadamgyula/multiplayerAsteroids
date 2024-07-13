@@ -11,8 +11,12 @@ export class Player {
         this.color = color;
         this.position = new Object();
         this.position.x = resolution[0] / 2 + Math.floor(Math.random() * 100) - 50;
-        this.position.y = resolution[1] / 2 + Math.floor(Math.random() * 100) - 50;;
+        this.position.y = resolution[1] / 2 + Math.floor(Math.random() * 100) - 50;
+        this.velocity = { x: 0, y: 0 };
+        this.speed_modifier = 4;
         this.rotation = 0;
+
+        this.score = 0;
 
         this.can_shoot = true;
     }
@@ -27,10 +31,7 @@ export class Player {
         }
 
         if (direction.includes('forward')) {
-            this.move(5);
-        }
-        if (direction.includes('backward')) {
-            this.move(-5);
+            this.accelerate();
         }
         if (direction.includes('left')) {
             this.rotation -= 2;
@@ -39,12 +40,19 @@ export class Player {
             this.rotation += 2;
         }
 
+        this.move();
+
         return false;
     }
 
-    move(distance) {
-        this.position.x += distance * Math.sin(this.rotation * Math.PI / 180);
-        this.position.y -= distance * Math.cos(this.rotation * Math.PI / 180);
+    accelerate() {
+        this.velocity.x = Math.sin(this.rotation * Math.PI / 180);
+        this.velocity.y = -Math.cos(this.rotation * Math.PI / 180);
+    }
+
+    move() {
+        this.position.x += this.velocity.x * this.speed_modifier;
+        this.position.y += this.velocity.y * this.speed_modifier;
     }
 
     shoot() {

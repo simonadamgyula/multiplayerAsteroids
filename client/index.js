@@ -1,24 +1,32 @@
 var keys = [];
 var loop = null;
+var score = 0;
+var hight_score = localStorage.getItem('hight_score') || 0;
 
 (async function () {
 
     const ws = await connectToServer();
 
     ws.onclose = () => {
-        document.querySelector("body").innerHTML = `<h1>You died!</h1>\n<button onclick="location.reload()">Rejoin</button>`;
+        document.querySelector("body").innerHTML = `<h1>You died!</h1><h3>Score: ${score}</h3><h4>Hight score: ${hight_score}</h4>\n<button onclick="location.reload()">Rejoin</button>`;
+        if (score > hight_score) {
+            hight_score = score;
+            localStorage.setItem('hight_score', score);
+        }
         document.body.classList.remove('playing');
         clearInterval(loop);
     }
 
     ws.onmessage = (webSocketMessage) => {
-
         const messageBody = JSON.parse(webSocketMessage.data);
 
         switch (messageBody.action) {
             case 'move':
                 var ship = getOrCreateShip(messageBody);
                 ship.style.transform = `translate(${messageBody.position.x}px, ${messageBody.position.y}px) rotate(${messageBody.rotation}deg)`;
+                break;
+            case 'score':
+                score = messageBody.score;
                 break;
             case 'disconnect':
                 var ship = document.querySelector(`[data-sender='${messageBody.sender}']`);
@@ -128,7 +136,7 @@ var loop = null;
             return existing;
         }
 
-        const template = document.getElementById('meteorite-template');
+        const template = document.getElementById(`meteorite-template`);
         const result = template.content.firstElementChild.cloneNode(true);
 
         result.setAttribute("data-meteorite", meteorite.id);
